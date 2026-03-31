@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
+import { nanoid } from "nanoid";
 import type { FocusSession } from "@/types";
 import { useStudyLogsStore } from "@/features/calendar/stores/useStudyLogsStore";
 import { useStudyObjectsStore } from "@/features/study-objects/stores/useStudyObjectsStore";
@@ -138,7 +139,7 @@ export const useFocusStore = defineStore("focus", () => {
     const durationMinutes = Math.max(1, Math.round(pauseAccumulatedMs / 60000));
 
     const session: FocusSession = {
-      id: crypto.randomUUID(),
+      id: nanoid(8),
       studyObjectId: activeStudyObjectId.value,
       disciplineId: activeDisciplineId.value,
       startedAt: sessionStartedAt.value,

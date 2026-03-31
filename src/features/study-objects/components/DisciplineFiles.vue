@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { nanoid } from "nanoid";
 import type { StudyFile } from "@/types";
 import { uploadFile } from "@/lib/supabase";
 import AppIcon from "@/components/AppIcon.vue";
@@ -63,7 +64,7 @@ async function submit() {
     uploading.value = true;
     uploadError.value = "";
     try {
-      const fileId = crypto.randomUUID();
+      const fileId = nanoid(8);
       const storagePath = `${props.studyObjectId}/${props.disciplineId}/${fileId}_${selectedFile.value.name}`;
       const publicUrl = await uploadFile(selectedFile.value, storagePath);
 

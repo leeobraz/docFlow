@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
+import { nanoid } from "nanoid";
 import type { StudyLog } from "@/types";
 
 const STORAGE_KEY = "docflow:study-logs";
@@ -63,7 +64,7 @@ export const useStudyLogsStore = defineStore("studyLogs", () => {
     notes: string;
   }): StudyLog {
     const log: StudyLog = {
-      id: crypto.randomUUID(),
+      id: nanoid(8),
       ...data,
       createdAt: new Date(),
     };

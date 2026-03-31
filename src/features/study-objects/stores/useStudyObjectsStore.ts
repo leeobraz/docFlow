@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
+import { nanoid } from "nanoid";
 import type { StudyObject, Discipline, StudyFile } from "@/types";
 import { deleteFile } from "@/lib/supabase";
 
@@ -45,7 +46,7 @@ export const useStudyObjectsStore = defineStore("studyObjects", () => {
   function createStudyObject(title: string, description: string): StudyObject {
     const now = new Date();
     const obj: StudyObject = {
-      id: crypto.randomUUID(),
+      id: nanoid(8),
       title,
       description,
       disciplines: [],
@@ -74,7 +75,7 @@ export const useStudyObjectsStore = defineStore("studyObjects", () => {
     if (!obj) return;
 
     const discipline: Discipline = {
-      id: crypto.randomUUID(),
+      id: nanoid(8),
       studyObjectId,
       name,
       files: [],
@@ -125,7 +126,7 @@ export const useStudyObjectsStore = defineStore("studyObjects", () => {
     if (!discipline) return;
 
     const studyFile: StudyFile = {
-      id: crypto.randomUUID(),
+      id: nanoid(8),
       disciplineId,
       name: file.name,
       type: file.type,
