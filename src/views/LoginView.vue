@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AppButton from "@/components/AppButton.vue";
 
 const auth = useAuthStore();
+const router = useRouter();
 const error = ref("");
 const loading = ref(false);
+
+watch(() => auth.isAuthenticated, (authenticated) => {
+  if (authenticated) router.replace("/");
+}, { immediate: true });
 
 async function handleGoogleLogin() {
   error.value = "";
