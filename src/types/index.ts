@@ -24,6 +24,7 @@ export interface StudyFile {
   type: "pdf" | "text";
   url?: string;
   content?: string;
+  storagePath?: string;
   uploadedAt: Date;
 }
 

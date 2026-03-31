@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import type { StudyObject, Discipline, StudyFile } from "@/types";
+import { deleteFile } from "@/lib/supabase";
 
 const STORAGE_KEY = "docflow:study-objects";
 
@@ -139,11 +140,15 @@ export const useStudyObjectsStore = defineStore("studyObjects", () => {
     return studyFile;
   }
 
-  function removeFile(studyObjectId: string, disciplineId: string, fileId: string) {
+  async function removeFile(studyObjectId: string, disciplineId: string, fileId: string) {
     const discipline = getDiscipline(studyObjectId, disciplineId);
     if (!discipline) return;
     const idx = discipline.files.findIndex((f) => f.id === fileId);
     if (idx !== -1) {
+      const file = discipline.files[idx];
+      if (file.storagePath) {
+        try { await deleteFile(file.storagePath); } catch { /* noop */ }
+      }
       discipline.files.splice(idx, 1);
       const obj = getById(studyObjectId);
       if (obj) obj.updatedAt = new Date();

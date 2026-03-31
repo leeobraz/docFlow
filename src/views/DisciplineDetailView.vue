@@ -34,7 +34,7 @@ function goBack() {
   });
 }
 
-function handleAddFile(file: { name: string; type: "pdf" | "text"; url?: string }) {
+function handleAddFile(file: { name: string; type: "pdf" | "text"; url: string; storagePath: string }) {
   store.addFile(studyObjectId.value, disciplineId.value, file);
 }
 
@@ -96,6 +96,8 @@ function handleSaveNotes(notes: string) {
         <DisciplineFiles
           v-if="activeTab === 'files'"
           :files="discipline.files"
+          :study-object-id="studyObjectId"
+          :discipline-id="disciplineId"
           @add-file="handleAddFile"
           @remove-file="handleRemoveFile"
         />
