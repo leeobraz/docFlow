@@ -12,8 +12,8 @@ const store = useStudyObjectsStore();
 const router = useRouter();
 const showCreateModal = ref(false);
 
-function handleCreate(title: string, description: string) {
-  const obj = store.createStudyObject(title, description);
+async function handleCreate(title: string, description: string) {
+  const obj = await store.createStudyObject(title, description);
   showCreateModal.value = false;
   router.push({ name: "study-object-detail", params: { id: obj.id } });
 }

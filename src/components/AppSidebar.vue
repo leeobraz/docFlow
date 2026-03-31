@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import AppIcon from "@/components/AppIcon.vue";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 defineProps<{
   open: boolean;
@@ -11,6 +12,13 @@ defineEmits<{
 }>();
 
 const route = useRoute();
+const router = useRouter();
+const auth = useAuthStore();
+
+async function handleLogout() {
+  await auth.signOut();
+  router.push("/login");
+}
 
 const navItems = [
   { to: "/study-objects", label: "Objetos de Estudo", icon: "book" as const },
@@ -67,11 +75,14 @@ function isActive(path: string): boolean {
       </router-link>
     </nav>
 
-    <div
-      v-if="open"
-      class="border-t border-surface-800 p-4"
-    >
-      <p class="text-xs text-surface-600">docFlow v0.1</p>
+    <div class="border-t border-surface-800 p-2">
+      <button
+        class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-surface-500 transition-colors hover:bg-surface-800 hover:text-surface-300"
+        @click="handleLogout"
+      >
+        <AppIcon name="log-out" :size="20" class="shrink-0" />
+        <span v-if="open" class="truncate">Sair</span>
+      </button>
     </div>
   </aside>
 </template>

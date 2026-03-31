@@ -1,26 +1,11 @@
 import { defineStore } from "pinia";
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { nanoid } from "nanoid";
 import type { FocusSession } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useStudyLogsStore } from "@/features/calendar/stores/useStudyLogsStore";
 import { useStudyObjectsStore } from "@/features/study-objects/stores/useStudyObjectsStore";
-
-const STORAGE_KEY = "docflow:focus-sessions";
-
-function loadSessions(): FocusSession[] {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw, (key, value) => {
-      if (["startedAt", "endedAt"].includes(key) && typeof value === "string") {
-        return new Date(value);
-      }
-      return value;
-    });
-  } catch {
-    return [];
-  }
-}
 
 function todayStr(): string {
   const d = new Date();
@@ -28,7 +13,7 @@ function todayStr(): string {
 }
 
 export const useFocusStore = defineStore("focus", () => {
-  const sessions = ref<FocusSession[]>(loadSessions());
+  const sessions = ref<FocusSession[]>([]);
   const elapsedSeconds = ref(0);
   const isRunning = ref(false);
   const isPaused = ref(false);
@@ -41,9 +26,26 @@ export const useFocusStore = defineStore("focus", () => {
   let pauseAccumulatedMs = 0;
   let segmentStart = 0;
 
-  watch(sessions, (val) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(val));
-  }, { deep: true });
+  function userId(): string {
+    return useAuthStore().user!.id;
+  }
+
+  async function fetchAll() {
+    const { data } = await supabase
+      .from("focus_sessions")
+      .select("*")
+      .eq("user_id", userId());
+
+    sessions.value = (data ?? []).map((s) => ({
+      id: s.id,
+      disciplineId: s.discipline_id,
+      studyObjectId: s.study_object_id,
+      startedAt: new Date(s.started_at),
+      endedAt: s.ended_at ? new Date(s.ended_at) : undefined,
+      durationMinutes: s.duration_minutes,
+      isActive: s.is_active,
+    }));
+  }
 
   const hasActiveSession = computed(() => isRunning.value || isPaused.value);
 
@@ -64,7 +66,6 @@ export const useFocusStore = defineStore("focus", () => {
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
-
     return sessions.value.filter((s) => s.startedAt >= startOfWeek);
   });
 
@@ -124,7 +125,7 @@ export const useFocusStore = defineStore("focus", () => {
     }, 200);
   }
 
-  function stopSession() {
+  async function stopSession() {
     if (!hasActiveSession.value || !sessionStartedAt.value) return;
 
     if (isRunning.value) {
@@ -149,8 +150,19 @@ export const useFocusStore = defineStore("focus", () => {
     };
     sessions.value.push(session);
 
+    await supabase.from("focus_sessions").insert({
+      id: session.id,
+      discipline_id: session.disciplineId,
+      study_object_id: session.studyObjectId,
+      user_id: userId(),
+      started_at: session.startedAt.toISOString(),
+      ended_at: session.endedAt!.toISOString(),
+      duration_minutes: durationMinutes,
+      is_active: false,
+    });
+
     const logsStore = useStudyLogsStore();
-    logsStore.createLog({
+    await logsStore.createLog({
       studyObjectId: activeStudyObjectId.value,
       disciplineId: activeDisciplineId.value,
       date: todayStr(),
@@ -159,7 +171,7 @@ export const useFocusStore = defineStore("focus", () => {
     });
 
     const objectsStore = useStudyObjectsStore();
-    objectsStore.addMinutesToDiscipline(
+    await objectsStore.addMinutesToDiscipline(
       activeStudyObjectId.value,
       activeDisciplineId.value,
       durationMinutes
@@ -197,6 +209,7 @@ export const useFocusStore = defineStore("focus", () => {
     weekSessions,
     weekTotalMinutes,
     recentSessions,
+    fetchAll,
     startSession,
     pauseSession,
     resumeSession,
